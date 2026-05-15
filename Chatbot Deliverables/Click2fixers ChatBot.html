@@ -1,0 +1,1953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clicks to Fixers — AI Learning Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   DESIGN TOKENS
+═══════════════════════════════════════════ */
+:root {
+  --bg:          #0a0f1e;
+  --surface:     #111827;
+  --surface2:    #1a2235;
+  --surface3:    #1e293b;
+  --border:      #1e2d45;
+  --border2:     #2d3f5a;
+
+  --blue:        #3b82f6;
+  --blue-dim:    rgba(59,130,246,.12);
+  --blue-glow:   rgba(59,130,246,.25);
+  --violet:      #8b5cf6;
+  --violet-dim:  rgba(139,92,246,.12);
+  --green:       #10b981;
+  --green-dim:   rgba(16,185,129,.12);
+  --amber:       #f59e0b;
+
+  --text:        #f1f5f9;
+  --text-2:      #94a3b8;
+  --text-3:      #64748b;
+
+  --user-bg:     #1e3a5f;
+  --user-border: #2563eb;
+  --bot-bg:      #111827;
+
+  --radius:      12px;
+  --radius-sm:   8px;
+  --radius-xs:   6px;
+
+  --font:        'Inter', system-ui, sans-serif;
+  --mono:        'Fira Code', monospace;
+
+  --header-h:    58px;
+  --sidebar-w:   236px;
+  --panel-w:     200px;
+
+  --transition:  0.2s ease;
+}
+
+/* LIGHT MODE */
+html.light {
+  --bg:          #f8fafc;
+  --surface:     #ffffff;
+  --surface2:    #f1f5f9;
+  --surface3:    #e2e8f0;
+  --border:      #e2e8f0;
+  --border2:     #cbd5e1;
+
+  --blue:        #2563eb;
+  --blue-dim:    rgba(37,99,235,.08);
+  --blue-glow:   rgba(37,99,235,.2);
+  --violet:      #7c3aed;
+  --violet-dim:  rgba(124,58,237,.08);
+  --green:       #059669;
+  --green-dim:   rgba(5,150,105,.08);
+
+  --text:        #0f172a;
+  --text-2:      #475569;
+  --text-3:      #94a3b8;
+
+  --user-bg:     #eff6ff;
+  --user-border: #93c5fd;
+  --bot-bg:      #ffffff;
+}
+
+/* ═══════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════ */
+*, *::before, *::after {
+  margin: 0; padding: 0; box-sizing: border-box;
+  transition: background-color var(--transition), border-color var(--transition), color var(--transition);
+}
+
+html, body {
+  height: 100%;
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--bg);
+  overflow: hidden;
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+button { font-family: var(--font); cursor: pointer; border: none; background: none; }
+
+/* ═══════════════════════════════════════════
+   APP SHELL
+═══════════════════════════════════════════ */
+.shell {
+  display: grid;
+  grid-template-rows: var(--header-h) 1fr;
+  grid-template-columns: var(--sidebar-w) 1fr var(--panel-w);
+  height: 100vh;
+}
+
+/* ═══════════════════════════════════════════
+   HEADER
+═══════════════════════════════════════════ */
+.header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  position: relative;
+  z-index: 20;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--blue), var(--violet));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.08), 0 4px 16px var(--blue-glow);
+}
+
+.brand-name {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--text);
+}
+
+.brand-name em {
+  color: var(--blue);
+  font-style: normal;
+}
+
+.brand-tag {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-3);
+  margin-left: 2px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 100px;
+  border: 1px solid var(--green-dim);
+  background: var(--green-dim);
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  animation: pulse-dot 2.5s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+.status-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--green);
+  letter-spacing: 0.3px;
+}
+
+/* THEME TOGGLE */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.theme-label {
+  font-size: 12px;
+  color: var(--text-3);
+  font-weight: 500;
+}
+
+.toggle-track {
+  width: 40px;
+  height: 22px;
+  border-radius: 100px;
+  background: var(--surface3);
+  border: 1px solid var(--border2);
+  position: relative;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.toggle-track.on {
+  background: var(--blue);
+  border-color: var(--blue);
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,.25);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+}
+
+.toggle-track.on .toggle-thumb {
+  transform: translateX(18px);
+}
+
+/* ═══════════════════════════════════════════
+   LEFT SIDEBAR
+═══════════════════════════════════════════ */
+.sidebar {
+  grid-row: 2;
+  grid-column: 1;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.sb-group {
+  padding: 16px 12px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sb-group:last-child { border-bottom: none; }
+
+.sb-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 8px;
+  padding: 0 4px;
+}
+
+/* Flow buttons */
+.flow-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border-radius: var(--radius-xs);
+  border: 1px solid transparent;
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 400;
+  text-align: left;
+  margin-bottom: 2px;
+  transition: all var(--transition);
+}
+
+.flow-btn:hover {
+  background: var(--blue-dim);
+  border-color: rgba(59,130,246,.2);
+  color: var(--blue);
+}
+
+.flow-btn .ficon {
+  font-size: 14px;
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+}
+
+/* Concept tags */
+.tag-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 2px 0;
+}
+
+.concept-tag {
+  padding: 4px 10px;
+  border-radius: 100px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--text-2);
+  font-size: 11px;
+  font-weight: 500;
+  transition: all var(--transition);
+}
+
+.concept-tag:hover {
+  background: var(--violet-dim);
+  border-color: rgba(139,92,246,.35);
+  color: var(--violet);
+}
+
+/* ═══════════════════════════════════════════
+   CHAT AREA
+═══════════════════════════════════════════ */
+.chat-area {
+  grid-row: 2;
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* Messages */
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  scroll-behavior: smooth;
+}
+
+/* Welcome screen */
+.welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 16px;
+  padding: 40px 24px;
+  animation: fade-up 0.4s ease-out;
+  flex: 1;
+  min-height: 300px;
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.welcome-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--blue), var(--violet));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  box-shadow: 0 8px 24px var(--blue-glow);
+}
+
+.welcome-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  color: var(--text);
+}
+
+.welcome-title span { color: var(--blue); }
+
+.welcome-sub {
+  font-size: 13px;
+  color: var(--text-2);
+  max-width: 380px;
+  line-height: 1.7;
+}
+
+.welcome-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.wa-btn {
+  padding: 8px 16px;
+  border-radius: 100px;
+  border: 1px solid var(--border2);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 500;
+  transition: all var(--transition);
+}
+
+.wa-btn:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+  background: var(--blue-dim);
+}
+
+/* Message rows */
+.msg-row {
+  display: flex;
+  gap: 12px;
+  animation: fade-up 0.25s ease-out;
+}
+
+.msg-row.user {
+  flex-direction: row-reverse;
+  align-self: flex-end;
+  max-width: 80%;
+}
+
+.msg-row.bot {
+  align-self: flex-start;
+  max-width: 85%;
+}
+
+/* Avatars */
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 2px;
+}
+
+.avatar.bot-av {
+  background: linear-gradient(135deg, var(--blue), var(--violet));
+  box-shadow: 0 2px 8px var(--blue-glow);
+}
+
+.avatar.user-av {
+  background: var(--user-bg);
+  border: 1px solid var(--user-border);
+}
+
+/* Bubbles */
+.bubble {
+  padding: 13px 16px;
+  border-radius: var(--radius);
+  line-height: 1.65;
+  font-size: 13.5px;
+}
+
+.msg-row.bot .bubble {
+  background: var(--bot-bg);
+  border: 1px solid var(--border);
+  border-top-left-radius: 4px;
+  color: var(--text);
+}
+
+.msg-row.user .bubble {
+  background: var(--user-bg);
+  border: 1px solid var(--user-border);
+  border-top-right-radius: 4px;
+  color: var(--text);
+}
+
+/* Bubble content styling */
+.bubble h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--blue);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bubble strong { color: var(--blue); font-weight: 600; }
+
+.bubble em { color: var(--green); font-style: normal; font-weight: 500; }
+
+.bubble p { margin-bottom: 8px; }
+.bubble p:last-child { margin-bottom: 0; }
+
+.bubble ul {
+  margin: 6px 0 8px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bubble li { color: var(--text-2); font-size: 13px; }
+.bubble li strong { color: var(--blue); }
+
+/* Module badge */
+.mod-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 100px;
+  background: var(--blue-dim);
+  border: 1px solid rgba(59,130,246,.25);
+  color: var(--blue);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin-left: 6px;
+  font-family: var(--font);
+}
+
+/* Related links */
+.related-row {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.related-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.rel-btn {
+  padding: 3px 10px;
+  border-radius: 100px;
+  border: 1px solid rgba(139,92,246,.3);
+  background: var(--violet-dim);
+  color: var(--violet);
+  font-size: 11px;
+  font-weight: 500;
+  transition: all var(--transition);
+}
+
+.rel-btn:hover {
+  background: rgba(139,92,246,.2);
+  border-color: var(--violet);
+}
+
+/* Further learning */
+.further-box {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--green-dim);
+  border: 1px solid rgba(16,185,129,.2);
+}
+
+.further-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-bottom: 4px;
+}
+
+.further-box p {
+  font-size: 12px;
+  color: var(--text-2);
+  margin: 0;
+}
+
+/* Feedback row */
+.fb-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  align-items: center;
+}
+
+.fb-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--text-3);
+  font-size: 11px;
+  font-weight: 500;
+  transition: all var(--transition);
+}
+
+.fb-btn:hover {
+  border-color: var(--green);
+  color: var(--green);
+  background: var(--green-dim);
+}
+
+.fb-note {
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+/* Typing indicator */
+.typing-bubble {
+  display: flex;
+  gap: 5px;
+  padding: 14px 16px;
+  background: var(--bot-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  border-top-left-radius: 4px;
+  align-items: center;
+}
+
+.t-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--blue);
+  opacity: 0.4;
+  animation: t-bounce 1.2s ease-in-out infinite;
+}
+
+.t-dot:nth-child(2) { animation-delay: 0.18s; }
+.t-dot:nth-child(3) { animation-delay: 0.36s; }
+
+@keyframes t-bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+  40%            { transform: translateY(-5px); opacity: 1; }
+}
+
+/* Error bubble */
+.err-bubble { color: #f87171 !important; }
+
+/* ═══════════════════════════════════════════
+   QUIZ
+═══════════════════════════════════════════ */
+.quiz-card {
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  background: var(--violet-dim);
+  border: 1px solid rgba(139,92,246,.25);
+}
+
+.quiz-q {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.quiz-opts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.quiz-opt {
+  padding: 8px 12px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border2);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: 12.5px;
+  text-align: left;
+  font-family: var(--font);
+  font-weight: 400;
+  transition: all var(--transition);
+}
+
+.quiz-opt:hover:not(:disabled) {
+  border-color: var(--violet);
+  color: var(--text);
+  background: var(--surface2);
+}
+
+.quiz-opt.correct {
+  border-color: var(--green);
+  background: var(--green-dim);
+  color: var(--green);
+  font-weight: 500;
+}
+
+.quiz-opt.wrong {
+  border-color: #ef4444;
+  background: rgba(239,68,68,.08);
+  color: #f87171;
+}
+
+.quiz-fb {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════════
+   DIAGRAMS
+═══════════════════════════════════════════ */
+.diagram-wrap {
+  margin-top: 12px;
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  overflow-x: auto;
+}
+
+.diagram-caption {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+/* Hierarchy diagram */
+.hier {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.hier-node {
+  padding: 8px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.h-ai { background: var(--blue-dim); border: 1.5px solid var(--blue); color: var(--blue); }
+.h-ml { background: var(--violet-dim); border: 1.5px solid var(--violet); color: var(--violet); }
+.h-dl { background: var(--green-dim); border: 1.5px solid var(--green); color: var(--green); }
+
+.hier-arrow {
+  color: var(--text-3);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.hier-note {
+  font-size: 11px;
+  color: var(--text-3);
+  text-align: center;
+  margin-top: 10px;
+  line-height: 1.6;
+}
+
+/* Neural net diagram */
+.nn-grid {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.nn-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.nn-col-label {
+  font-size: 10px;
+  color: var(--text-3);
+  text-align: center;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.nn-node {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid;
+}
+
+.nn-i { border-color: var(--blue); background: var(--blue-dim); }
+.nn-h { border-color: var(--violet); background: var(--violet-dim); }
+.nn-o { border-color: var(--green); background: var(--green-dim); }
+.nn-arrow { color: var(--text-3); font-size: 18px; }
+
+/* NLP pipeline */
+.nlp-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.nlp-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.nlp-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.nlp-text { font-size: 12px; color: var(--text); }
+.nlp-text strong { color: var(--blue); }
+
+/* Ethics diagram */
+.ethics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.ethics-pill {
+  padding: 9px 11px;
+  border-radius: var(--radius-sm);
+  border: 1px solid;
+}
+
+.ethics-title-text {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.ethics-desc {
+  font-size: 11px;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════════
+   INPUT AREA
+═══════════════════════════════════════════ */
+.input-area {
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.chips-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.chip-btn {
+  padding: 5px 12px;
+  border-radius: 100px;
+  border: 1px solid var(--border2);
+  background: var(--surface2);
+  color: var(--text-2);
+  font-size: 11.5px;
+  font-weight: 400;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.chip-btn:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+  background: var(--blue-dim);
+}
+
+.input-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.text-input {
+  flex: 1;
+  height: 42px;
+  padding: 0 16px;
+  background: var(--surface2);
+  border: 1.5px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13.5px;
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.text-input:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(59,130,246,.1);
+}
+
+.text-input::placeholder { color: var(--text-3); }
+
+.send-btn {
+  height: 42px;
+  padding: 0 20px;
+  border-radius: var(--radius-sm);
+  background: var(--blue);
+  color: #fff;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+  box-shadow: 0 2px 8px var(--blue-glow);
+}
+
+.send-btn:hover { background: #2563eb; box-shadow: 0 4px 16px var(--blue-glow); transform: translateY(-1px); }
+.send-btn:active { transform: translateY(0); }
+.send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* ═══════════════════════════════════════════
+   RIGHT PANEL
+═══════════════════════════════════════════ */
+.rpanel {
+  grid-row: 2;
+  grid-column: 3;
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.rp-section {
+  padding: 16px 12px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.rp-section:last-child { border-bottom: none; }
+
+.rp-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 10px;
+  padding: 0 2px;
+}
+
+/* Module cards */
+.mod-card {
+  padding: 8px 10px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border);
+  margin-bottom: 5px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.mod-card:hover {
+  border-color: rgba(139,92,246,.35);
+  background: var(--violet-dim);
+}
+
+.mod-num {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--blue);
+}
+
+.mod-name {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+/* Progress bars */
+.prog-item { margin-bottom: 10px; }
+.prog-item:last-child { margin-bottom: 0; }
+
+.prog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.prog-name {
+  font-size: 11px;
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+.prog-pct {
+  font-size: 10px;
+  color: var(--text-3);
+  font-weight: 600;
+  font-family: var(--mono);
+}
+
+.prog-track {
+  height: 4px;
+  background: var(--surface3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.prog-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--blue), var(--violet));
+  transition: width 0.5s ease;
+}
+
+/* Fact box */
+.fact-text {
+  font-size: 11.5px;
+  color: var(--text-2);
+  line-height: 1.7;
+}
+
+/* ═══════════════════════════════════════════
+   UTILITIES
+═══════════════════════════════════════════ */
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 6px 0;
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ════════════════ HEADER ════════════════ -->
+  <header class="header">
+    <div class="brand">
+      <div class="brand-mark">🧠</div>
+      <div>
+        <div class="brand-name">Clicks to <em>Fixers</em> <span class="brand-tag">AI Learning Assistant</span></div>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div class="status">
+        <div class="status-dot"></div>
+        <span class="status-label">Online</span>
+      </div>
+      <div class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <span class="theme-label" id="themeLabel">Dark</span>
+        <div class="toggle-track" id="ttrack">
+          <div class="toggle-thumb" id="tthumb">🌙</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ════════════════ SIDEBAR ════════════════ -->
+  <aside class="sidebar">
+
+    <div class="sb-group">
+      <div class="sb-label">Guided Flows</div>
+      <button class="flow-btn" onclick="runFlow('nlp')">
+        <span class="ficon">💬</span> Learn about NLP
+      </button>
+      <button class="flow-btn" onclick="runFlow('ethics')">
+        <span class="ficon">⚖️</span> Explore AI Ethics
+      </button>
+      <button class="flow-btn" onclick="runFlow('aivsml')">
+        <span class="ficon">🔀</span> AI vs ML vs DL
+      </button>
+      <button class="flow-btn" onclick="runFlow('nn')">
+        <span class="ficon">🕸️</span> Neural Networks
+      </button>
+      <button class="flow-btn" onclick="runFlow('cv')">
+        <span class="ficon">👁️</span> Computer Vision
+      </button>
+    </div>
+
+    <div class="sb-group">
+      <div class="sb-label">Quick Concepts</div>
+      <div class="tag-cloud">
+        <button class="concept-tag" onclick="ask('what is machine learning')">ML</button>
+        <button class="concept-tag" onclick="ask('what are llms')">LLMs</button>
+        <button class="concept-tag" onclick="ask('what is deep learning')">Deep Learning</button>
+        <button class="concept-tag" onclick="ask('what are transformers')">Transformers</button>
+        <button class="concept-tag" onclick="ask('what is overfitting')">Overfitting</button>
+        <button class="concept-tag" onclick="ask('what is bias in ai')">AI Bias</button>
+        <button class="concept-tag" onclick="ask('what are gans')">GANs</button>
+        <button class="concept-tag" onclick="ask('ai in healthcare')">Healthcare</button>
+        <button class="concept-tag" onclick="ask('ai in finance')">Finance</button>
+        <button class="concept-tag" onclick="ask('what is reinforcement learning')">RL</button>
+      </div>
+    </div>
+
+    <div class="sb-group">
+      <div class="sb-label">Interactive</div>
+      <button class="flow-btn" onclick="showQuiz()">
+        <span class="ficon">❓</span> Take a Quiz
+      </button>
+      <button class="flow-btn" onclick="showDiagram('hierarchy')">
+        <span class="ficon">📊</span> AI / ML / DL Diagram
+      </button>
+      <button class="flow-btn" onclick="showDiagram('nn')">
+        <span class="ficon">🕸️</span> Neural Net Diagram
+      </button>
+      <button class="flow-btn" onclick="showDiagram('nlp')">
+        <span class="ficon">💬</span> NLP Pipeline
+      </button>
+      <button class="flow-btn" onclick="showDiagram('ethics')">
+        <span class="ficon">⚖️</span> Ethics Framework
+      </button>
+      <div class="divider"></div>
+      <button class="flow-btn" onclick="clearChat()">
+        <span class="ficon">↺</span> Reset Chat
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- ════════════════ CHAT ════════════════ -->
+  <main class="chat-area">
+    <div class="messages" id="msgs"></div>
+
+    <div class="input-area">
+      <div class="chips-row" id="chips">
+        <button class="chip-btn" onclick="ask('what is artificial intelligence')">What is AI?</button>
+        <button class="chip-btn" onclick="ask('what is machine learning')">What is ML?</button>
+        <button class="chip-btn" onclick="ask('what is nlp')">What is NLP?</button>
+        <button class="chip-btn" onclick="ask('ai vs ml vs deep learning')">AI vs ML vs DL</button>
+        <button class="chip-btn" onclick="ask('real world ai applications')">AI Applications</button>
+      </div>
+      <div class="input-row">
+        <input
+          class="text-input"
+          id="chatInput"
+          type="text"
+          placeholder="Ask me about AI, ML, NLP, Neural Networks, Ethics…"
+          onkeydown="if(event.key==='Enter') sendMsg()"
+          autocomplete="off"
+        >
+        <button class="send-btn" id="sendBtn" onclick="sendMsg()">Send</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- ════════════════ RIGHT PANEL ════════════════ -->
+  <aside class="rpanel">
+
+    <div class="rp-section">
+      <div class="rp-label">Curriculum</div>
+      <div class="mod-card" onclick="ask('ai foundations history')">
+        <div class="mod-num">Module 1</div>
+        <div class="mod-name">AI Foundations</div>
+      </div>
+      <div class="mod-card" onclick="ask('machine learning algorithms')">
+        <div class="mod-num">Module 2</div>
+        <div class="mod-name">Machine Learning</div>
+      </div>
+      <div class="mod-card" onclick="ask('deep learning neural networks')">
+        <div class="mod-num">Module 3</div>
+        <div class="mod-name">Deep Learning</div>
+      </div>
+      <div class="mod-card" onclick="ask('ai ethics responsible')">
+        <div class="mod-num">Module 4</div>
+        <div class="mod-name">AI Ethics</div>
+      </div>
+    </div>
+
+    <div class="rp-section">
+      <div class="rp-label">Your Progress</div>
+      <div class="prog-item">
+        <div class="prog-header">
+          <span class="prog-name">AI Basics</span>
+          <span class="prog-pct" id="p1t">0%</span>
+        </div>
+        <div class="prog-track"><div class="prog-fill" id="p1" style="width:0%"></div></div>
+      </div>
+      <div class="prog-item">
+        <div class="prog-header">
+          <span class="prog-name">Machine Learning</span>
+          <span class="prog-pct" id="p2t">0%</span>
+        </div>
+        <div class="prog-track"><div class="prog-fill" id="p2" style="width:0%"></div></div>
+      </div>
+      <div class="prog-item">
+        <div class="prog-header">
+          <span class="prog-name">Deep Learning</span>
+          <span class="prog-pct" id="p3t">0%</span>
+        </div>
+        <div class="prog-track"><div class="prog-fill" id="p3" style="width:0%"></div></div>
+      </div>
+      <div class="prog-item">
+        <div class="prog-header">
+          <span class="prog-name">AI Ethics</span>
+          <span class="prog-pct" id="p4t">0%</span>
+        </div>
+        <div class="prog-track"><div class="prog-fill" id="p4" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <div class="rp-section">
+      <div class="rp-label">Did You Know?</div>
+      <p class="fact-text" id="factbox">
+        The term "Artificial Intelligence" was coined by John McCarthy at the Dartmouth Conference in 1956.
+      </p>
+    </div>
+
+  </aside>
+
+</div><!-- /shell -->
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════════════════════
+//  KNOWLEDGE BASE — 20 Q&A pairs
+// ═══════════════════════════════════════════════════════════════
+const QA = [
+  {
+    keys: ['what is artificial intelligence','what is ai','define ai','ai definition','ai foundations','ai history','learn ai','learning ai','study ai','start ai','ai basics'],
+    title: 'What is Artificial Intelligence?', module: 1,
+    answer: `<p><strong>Artificial Intelligence (AI)</strong> is the simulation of human intelligence by computer systems. AI enables machines to learn, reason, problem-solve, understand language, and recognise images.</p><h4>Key Branches of AI</h4><ul><li><strong>Machine Learning</strong> — systems that learn from data</li><li><strong>Natural Language Processing</strong> — understanding human language</li><li><strong>Computer Vision</strong> — interpreting visual information</li><li><strong>Robotics</strong> — physical intelligent agents</li></ul><p>The term was coined by <strong>John McCarthy at the Dartmouth Conference in 1956</strong>.</p>`,
+    related: ['Machine Learning','Deep Learning','NLP'],
+    further: '📚 CAPACITI Bootcamp Module 1: AI Foundations — covers the history, branches, and scope of Artificial Intelligence.'
+  },
+  {
+    keys: ['what is machine learning','define machine learning','ml definition','machine learning algorithms','what is ml','learn machine learning','learning ml','study ml','start ml','ml basics','machine learning basics'],
+    title: 'What is Machine Learning?', module: 2,
+    answer: `<p><strong>Machine Learning (ML)</strong> is a subset of AI where systems learn from data to improve performance — without being explicitly programmed with fixed rules.</p><h4>Three Main Learning Types</h4><ul><li><strong>Supervised Learning</strong> — learns from labelled data (e.g., spam detection)</li><li><strong>Unsupervised Learning</strong> — finds patterns in unlabelled data (e.g., customer clusters)</li><li><strong>Reinforcement Learning</strong> — learns by trial and reward (e.g., game-playing AI)</li></ul><h4>Common Algorithms</h4><ul><li>Decision Trees, Random Forests, Linear Regression</li><li>Support Vector Machines (SVM), K-Nearest Neighbours (KNN)</li></ul>`,
+    related: ['Supervised Learning','Deep Learning','Neural Networks'],
+    further: '📚 CAPACITI Bootcamp Module 2: Machine Learning — covers ML types, algorithms, training, and evaluation metrics.'
+  },
+  {
+    keys: ['what is deep learning','define deep learning','deep learning explained'],
+    title: 'What is Deep Learning?', module: 3,
+    answer: `<p><strong>Deep Learning</strong> is a subset of Machine Learning that uses <strong>neural networks with many layers</strong> — hence "deep" — to learn complex representations of data.</p><h4>Why "Deep"?</h4><p>Each layer learns increasingly abstract features. A CNN identifying faces first learns edges, then shapes, then facial structures.</p><h4>Key Architectures</h4><ul><li><strong>CNNs</strong> — images and visual data</li><li><strong>RNNs</strong> — sequences and time-series</li><li><strong>Transformers</strong> — natural language (GPT, BERT)</li><li><strong>GANs</strong> — generating synthetic data</li></ul>`,
+    related: ['Neural Networks','Transformers','Machine Learning'],
+    further: '📚 CAPACITI Bootcamp Module 3: Deep Learning — covers architectures, training techniques, and real-world applications.'
+  },
+  {
+    keys: ['ai vs ml','ai versus ml','ai vs ml vs dl','difference between ai and ml','compare ai and ml','ai ml dl','ai and ml difference','how are ai ml different'],
+    title: 'AI vs ML vs Deep Learning', module: 1,
+    answer: `<p>Think of these as <strong>three nested circles</strong> — each fits inside the one before it.</p><h4>🤖 Artificial Intelligence — Broadest</h4><p>Any technique that makes machines intelligent: rules, logic, expert systems, ML, robotics.</p><h4>📊 Machine Learning — Inside AI</h4><p>AI systems that <em>learn from data</em> rather than following hard-coded rules.</p><h4>🕸️ Deep Learning — Inside ML</h4><p>ML using multi-layered neural networks. Needs large data and GPU hardware. Powers ChatGPT, image recognition, voice assistants.</p><p><strong>Analogy:</strong> AI is the universe — ML is Earth — Deep Learning is your city.</p>`,
+    related: ['Neural Networks','Machine Learning','Artificial Intelligence'],
+    further: '📚 CAPACITI Bootcamp Module 1: AI Foundations — covers the AI / ML / Deep Learning hierarchy and distinctions.'
+  },
+  {
+    keys: ['what is nlp','natural language processing','what is natural language processing','nlp definition'],
+    title: 'What is Natural Language Processing?', module: 3,
+    answer: `<p><strong>Natural Language Processing (NLP)</strong> is the branch of AI that enables computers to understand, interpret, and generate human language — both written and spoken.</p><h4>Core NLP Tasks</h4><ul><li><strong>Tokenisation</strong> — splitting text into words or sentences</li><li><strong>Sentiment Analysis</strong> — detecting emotion or opinion in text</li><li><strong>Named Entity Recognition</strong> — finding names, places, and dates</li><li><strong>Machine Translation</strong> — translating between languages</li><li><strong>Text Generation</strong> — producing human-like text</li></ul><p>NLP powers <em>Google Search, Siri, autocorrect, chatbots, and email spam filters</em>.</p>`,
+    related: ['LLMs','Transformers','Computer Vision'],
+    further: '📚 CAPACITI Bootcamp Module 3: Deep Learning — covers NLP, Transformers, and large language models.'
+  },
+  {
+    keys: ['nlp applications','applications of nlp','uses of nlp','real world nlp'],
+    title: 'Real-World NLP Applications', module: 3,
+    answer: `<p>NLP is embedded in tools you use every single day:</p><ul><li>🔍 <strong>Search Engines</strong> — Google understands intent, not just keywords</li><li>💬 <strong>Virtual Assistants</strong> — Siri, Alexa, Google Assistant</li><li>📧 <strong>Spam Filters</strong> — automatically classifying unwanted email</li><li>🌍 <strong>Machine Translation</strong> — Google Translate, DeepL</li><li>📰 <strong>Sentiment Analysis</strong> — brands monitoring social media</li><li>⚕️ <strong>Healthcare</strong> — analysing clinical notes and medical records</li><li>⚖️ <strong>Legal</strong> — automated document review and contract analysis</li></ul>`,
+    related: ['Machine Translation','Sentiment Analysis','LLMs'],
+    further: '📚 CAPACITI Bootcamp Module 3: Deep Learning — NLP applications section covers industry use cases in detail.'
+  },
+  {
+    keys: ['nlp challenges','challenges in nlp','problems in nlp','nlp difficulties'],
+    title: 'Key Challenges in NLP', module: 3,
+    answer: `<p>NLP is one of the hardest AI problems because human language is <strong>ambiguous, contextual, and constantly evolving</strong>.</p><h4>Major Challenges</h4><ul><li><strong>Ambiguity</strong> — "I saw a man with a telescope" — who has it?</li><li><strong>Context & Sarcasm</strong> — "Great, another Monday" is hard to interpret correctly</li><li><strong>Low-Resource Languages</strong> — most models perform poorly outside English</li><li><strong>Entity Variation</strong> — "SA", "South Africa", and "RSA" all mean the same thing</li><li><strong>Bias</strong> — models learn stereotypes from their training data</li><li><strong>Hallucination</strong> — LLMs can generate confident but factually incorrect output</li></ul>`,
+    related: ['Bias in AI','LLMs','Transformers'],
+    further: '📚 CAPACITI Bootcamp Module 3: Deep Learning — covers NLP limitations and current research directions.'
+  },
+  {
+    keys: ['what is ai ethics','ai ethics','ethics in ai','responsible ai','ai ethics overview','ai ethics responsible'],
+    title: 'AI Ethics Overview', module: 4,
+    answer: `<p><strong>AI Ethics</strong> is the field ensuring that AI is developed and used in ways that are fair, safe, transparent, and beneficial to society.</p><h4>Five Core Principles</h4><ul><li>⚖️ <strong>Fairness</strong> — AI must not discriminate against individuals or groups</li><li>🔍 <strong>Transparency</strong> — AI decisions must be explainable and auditable</li><li>🔒 <strong>Privacy</strong> — personal data must be collected and used responsibly</li><li>🛡️ <strong>Safety</strong> — AI must not cause physical or social harm</li><li>✅ <strong>Accountability</strong> — humans must remain responsible for AI outcomes</li></ul><p>Major bodies like the <strong>EU, UN, and UNESCO</strong> have all published AI ethics frameworks.</p>`,
+    related: ['Bias in AI','Privacy in AI','Fairness'],
+    further: '📚 CAPACITI Bootcamp Module 4: AI Ethics — dedicated module covering all ethical principles, governance frameworks, and responsible AI.'
+  },
+  {
+    keys: ['bias in ai','what is algorithmic bias','ai bias','algorithmic bias','bias artificial intelligence'],
+    title: 'Bias in AI', module: 4,
+    answer: `<p><strong>AI Bias</strong> occurs when an AI system produces systematically unfair results for certain groups — usually because of biased training data or flawed design choices.</p><h4>Sources of Bias</h4><ul><li><strong>Biased Training Data</strong> — if data over-represents one group, the model favours it</li><li><strong>Historical Bias</strong> — AI trained on past decisions inherits historical discrimination</li><li><strong>Measurement Bias</strong> — how data is collected can introduce unfairness</li><li><strong>Deployment Bias</strong> — using a model outside its intended context</li></ul><h4>Real-World Examples</h4><ul><li>Facial recognition less accurate on darker skin tones</li><li>Hiring algorithms that downrank CVs from women</li><li>Loan models that penalise certain postcodes</li></ul>`,
+    related: ['AI Ethics','Privacy in AI','Fairness in AI'],
+    further: '📚 CAPACITI Bootcamp Module 4: AI Ethics — covers bias detection, mitigation strategies, and real-world case studies.'
+  },
+  {
+    keys: ['privacy ai','ai privacy','privacy considerations','data privacy ai','privacy artificial intelligence'],
+    title: 'Privacy Considerations in AI', module: 4,
+    answer: `<p>AI systems rely on <strong>vast amounts of personal data</strong>, creating serious privacy concerns about collection, storage, and use.</p><h4>Key Privacy Risks</h4><ul><li><strong>Data Collection</strong> — users rarely know what AI systems collect about them</li><li><strong>Data Breaches</strong> — large datasets are high-value targets for hackers</li><li><strong>Surveillance</strong> — facial recognition enables mass tracking of individuals</li><li><strong>Re-identification</strong> — "anonymised" data can be linked back to real people</li><li><strong>Consent</strong> — people rarely give meaningful, informed consent</li></ul><h4>Legal Protections</h4><p>In South Africa, <strong>POPIA</strong> (Protection of Personal Information Act) governs personal data. The EU has <strong>GDPR</strong>.</p>`,
+    related: ['AI Ethics','Bias in AI','Responsible AI'],
+    further: '📚 CAPACITI Bootcamp Module 4: AI Ethics — covers POPIA (South Africa\'s data protection law), GDPR, and responsible data practices.'
+  },
+  {
+    keys: ['what are neural networks','neural network','how do neural networks work','neural network explained'],
+    title: 'What is a Neural Network?', module: 3,
+    answer: `<p>A <strong>Neural Network</strong> is a computational model inspired by the human brain. It consists of connected layers of nodes (neurons) that process and transform data.</p><h4>Network Structure</h4><ul><li><strong>Input Layer</strong> — receives raw data (e.g., pixel values of an image)</li><li><strong>Hidden Layers</strong> — extract features and learn patterns (can be many layers deep)</li><li><strong>Output Layer</strong> — produces the final prediction or classification</li></ul><h4>How It Learns</h4><p>Networks learn by adjusting connection <strong>weights</strong> through a process called <strong>backpropagation</strong> — calculating errors and updating weights to improve accuracy over many training iterations.</p>`,
+    related: ['Deep Learning','Backpropagation','Activation Functions'],
+    further: '📚 CAPACITI Bootcamp Module 3: Deep Learning — covers neural network architecture, training processes, and optimisation techniques.'
+  },
+  {
+    keys: ['what are llms','large language models','llm','gpt','what is gpt','transformers','what are transformers'],
+    title: 'What are Large Language Models (LLMs)?', module: 3,
+    answer: `<p><strong>Large Language Models (LLMs)</strong> are AI models trained on massive text datasets to understand and generate human language. They are built on the <strong>Transformer architecture</strong> (introduced 2017).</p><h4>How LLMs Work</h4><ul><li>Trained on trillions of words from the internet, books, and code</li><li>Learn to predict the next word in a sequence</li><li>Use <strong>attention mechanisms</strong> to understand context across long passages</li></ul><h4>Notable LLMs</h4><ul><li><strong>GPT-4</strong> — powers ChatGPT (OpenAI)</li><li><strong>Claude</strong> — Anthropic's assistant</li><li><strong>Gemini</strong> — Google's multimodal model</li><li><strong>LLaMA</strong> — Meta's open-source LLM</li></ul>`,
+    related: ['Transformers','NLP','Deep Learning'],
+    further: '📚 CAPACITI Bootcamp Module 3: Deep Learning — covers Transformer architecture, attention mechanisms, and large language models.'
+  },
+  {
+    keys: ['what is computer vision','computer vision','cv ai','image recognition'],
+    title: 'What is Computer Vision?', module: 3,
+    answer: `<p><strong>Computer Vision (CV)</strong> is the field of AI that enables computers to interpret and understand visual information from images, videos, and camera feeds.</p><h4>Core CV Tasks</h4><ul><li><strong>Image Classification</strong> — "Is this a cat or a dog?"</li><li><strong>Object Detection</strong> — locating multiple objects in a single image</li><li><strong>Facial Recognition</strong> — identifying specific individuals</li><li><strong>Medical Imaging</strong> — detecting tumours in X-rays and scans</li><li><strong>OCR</strong> — reading text from images and documents</li></ul><p>Most CV systems use <strong>Convolutional Neural Networks (CNNs)</strong>, which are architecturally optimised to process grid-structured pixel data.</p>`,
+    related: ['CNNs','Deep Learning','Neural Networks'],
+    further: '📚 CAPACITI Bootcamp Module 3: Deep Learning — covers Computer Vision, Convolutional Neural Networks (CNNs), and object detection.'
+  },
+  {
+    keys: ['real world ai applications','ai applications','ai in industry','ai uses','uses of ai'],
+    title: 'Real-World AI Applications', module: 1,
+    answer: `<p>AI is transforming every major industry:</p><h4>🏥 Healthcare</h4><ul><li>Detecting cancer in scans with radiologist-level accuracy</li><li>Drug discovery — AlphaFold predicted nearly all known protein structures</li></ul><h4>💰 Finance</h4><ul><li>Fraud detection on card transactions</li><li>Algorithmic trading and credit scoring</li></ul><h4>🚗 Transport</h4><ul><li>Self-driving vehicles (Tesla, Waymo)</li><li>Traffic flow optimisation</li></ul><h4>🎓 Education</h4><ul><li>Personalised learning platforms and AI tutors</li></ul>`,
+    related: ['AI Ethics','Machine Learning','Computer Vision'],
+    further: '📚 CAPACITI Bootcamp Module 1: AI Foundations — covers real-world AI applications and use cases across industries.'
+  },
+  {
+    keys: ['what is overfitting','overfitting','underfitting','regularisation'],
+    title: 'Overfitting and Underfitting', module: 2,
+    answer: `<p><strong>Overfitting</strong> — a model memorises training data including noise, and fails on new data. Like a student who memorises answers without understanding.</p><p><strong>Underfitting</strong> — a model is too simple to capture patterns. Like a student who barely studied.</p><h4>Preventing Overfitting</h4><ul><li><strong>Regularisation</strong> — penalises complexity (L1, L2)</li><li><strong>Dropout</strong> — randomly disables neurons during training</li><li><strong>Early Stopping</strong> — halts training before the model overfits</li><li><strong>More Training Data</strong> — gives the model more to generalise from</li><li><strong>Cross-Validation</strong> — tests across multiple data splits</li></ul>`,
+    related: ['Machine Learning','Neural Networks','Training Data'],
+    further: '📚 CAPACITI Bootcamp Module 2: Machine Learning — covers model evaluation, the bias-variance tradeoff, and regularisation techniques.'
+  },
+  {
+    keys: ['what is reinforcement learning','reinforcement learning','rl','reward learning'],
+    title: 'What is Reinforcement Learning?', module: 2,
+    answer: `<p><strong>Reinforcement Learning (RL)</strong> is a type of ML where an <strong>agent</strong> learns by interacting with an environment and receiving rewards or penalties for its actions.</p><h4>How It Works</h4><ul><li>An agent takes <strong>actions</strong> in an <strong>environment</strong></li><li>Each action returns a <strong>reward</strong> (positive) or <strong>penalty</strong> (negative)</li><li>The agent learns to maximise <strong>cumulative reward</strong> over time</li></ul><h4>Famous Applications</h4><ul><li><strong>AlphaGo</strong> — defeated the world Go champion in 2016</li><li><strong>ChatGPT</strong> — fine-tuned using RLHF (RL from Human Feedback)</li><li><strong>Robotics</strong> — training robots to walk and manipulate objects</li></ul>`,
+    related: ['Machine Learning','Deep Learning','AlphaGo'],
+    further: '📚 CAPACITI Bootcamp Module 2: Machine Learning — covers Reinforcement Learning, Q-learning, and policy optimisation strategies.'
+  },
+  {
+    keys: ['what are gans','gans','generative adversarial networks','generative ai'],
+    title: 'What are GANs?', module: 3,
+    answer: `<p><strong>Generative Adversarial Networks (GANs)</strong> consist of two neural networks that compete against each other to generate increasingly realistic data.</p><h4>The Two Networks</h4><ul><li><strong>Generator</strong> — creates fake data (images, audio, text)</li><li><strong>Discriminator</strong> — tries to detect which data is real vs. fake</li></ul><p>They are trained together — the generator improves by fooling the discriminator, and the discriminator improves by catching fakes — until the generator produces highly realistic outputs.</p><h4>Applications</h4><ul><li>Realistic image synthesis and deepfakes</li><li>AI art generation</li><li>Data augmentation and drug design</li></ul>`,
+    related: ['Deep Learning','Neural Networks','Generative AI'],
+    further: '📚 CAPACITI Bootcamp Module 3: Deep Learning — covers GAN architecture, training dynamics, and generative AI applications.'
+  },
+  {
+    keys: ['ai in healthcare','healthcare ai','medical ai'],
+    title: 'AI in Healthcare', module: 1,
+    answer: `<p>AI is making healthcare faster, more accurate, and more personalised:</p><h4>Key Applications</h4><ul><li>🩺 <strong>Diagnosis</strong> — AI detects cancers in X-rays and scans at radiologist-level accuracy</li><li>💊 <strong>Drug Discovery</strong> — AlphaFold predicted nearly all known protein structures</li><li>🧬 <strong>Genomics</strong> — analysing DNA to predict disease risk</li><li>🏥 <strong>Operations</strong> — predicting readmissions, scheduling, staffing</li><li>🩻 <strong>Surgical Robotics</strong> — AI-guided precision surgery</li></ul><h4>Ethical Concerns</h4><p>Patient data privacy, algorithmic bias in diagnosis, and accountability when AI makes an error remain critical issues.</p>`,
+    related: ['AI Ethics','Computer Vision','AI Applications'],
+    further: '📚 CAPACITI Bootcamp Module 1: AI Foundations (healthcare applications) and Module 4: AI Ethics (data privacy and algorithmic bias in healthcare).'
+  },
+  {
+    keys: ['ai in finance','finance ai','fintech ai'],
+    title: 'AI in Finance', module: 1,
+    answer: `<p>AI has fundamentally transformed how financial services operate:</p><h4>Key Applications</h4><ul><li>💳 <strong>Fraud Detection</strong> — ML flags suspicious transactions in milliseconds</li><li>📈 <strong>Algorithmic Trading</strong> — AI executes trades faster than any human</li><li>📊 <strong>Credit Scoring</strong> — models assess loan risk across hundreds of variables</li><li>🤖 <strong>Robo-Advisors</strong> — automated investment portfolio management</li><li>💬 <strong>Customer Service</strong> — AI chatbots handling banking queries 24/7</li></ul><h4>Risks</h4><p>AI can amplify market volatility, create new forms of lending bias, and raise concerns about job displacement.</p>`,
+    related: ['Machine Learning','AI Ethics','Real-World Applications'],
+    further: '📚 CAPACITI Bootcamp Module 1: AI Foundations — covers AI applications across industries including finance and fintech.'
+  },
+  {
+    keys: ['what is supervised learning','supervised learning','labelled data','classification regression'],
+    title: 'What is Supervised Learning?', module: 2,
+    answer: `<p><strong>Supervised Learning</strong> trains a model on <strong>labelled data</strong> — every input has a correct output label provided during training.</p><h4>How It Works</h4><ul><li>Model sees input-output pairs: (email → spam / not spam)</li><li>Learns to map inputs to outputs by minimising prediction errors</li><li>Once trained, it predicts labels for new, unseen data</li></ul><h4>Two Main Task Types</h4><ul><li><strong>Classification</strong> — predicts a category (spam, disease, sentiment)</li><li><strong>Regression</strong> — predicts a number (house price, temperature, stock value)</li></ul><p>Examples: spam filters, medical diagnosis models, loan default predictors, image classifiers.</p>`,
+    related: ['Machine Learning','Unsupervised Learning','Reinforcement Learning'],
+    further: '📚 CAPACITI Bootcamp Module 2: Machine Learning — covers all three learning paradigms (supervised, unsupervised, reinforcement) with practical examples.'
+  }
+];
+
+// ═══════════════════════════════════════════════════════════════
+//  CONVERSATION FLOWS — exact as per question paper
+// ═══════════════════════════════════════════════════════════════
+const FLOWS = {
+  nlp: {
+    name: 'NLP Learning Path',
+    steps: ['what is nlp', 'nlp applications', 'nlp challenges']
+  },
+  ethics: {
+    name: 'AI Ethics Exploration',
+    steps: ['what is ai ethics', 'bias in ai', 'privacy ai']
+  },
+  aivsml: {
+    name: 'AI vs ML vs DL',
+    steps: ['what is artificial intelligence', 'what is machine learning', 'ai vs ml vs deep learning']
+  },
+  nn: {
+    name: 'Neural Networks Deep Dive',
+    steps: ['what are neural networks', 'what is deep learning', 'what are llms']
+  },
+  cv: {
+    name: 'Computer Vision Path',
+    steps: ['what is computer vision', 'what is deep learning', 'real world ai applications']
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  QUIZ — 8 questions
+// ═══════════════════════════════════════════════════════════════
+const QUIZZES = [
+  { q: "What does 'ML' stand for?",
+    opts: ["Machine Logic","Machine Learning","Meta Language","Model Learning"],
+    ans: 1, expl: "ML stands for Machine Learning — AI systems that learn from data." },
+  { q: "Which is the correct nesting order?",
+    opts: ["ML ⊂ AI ⊂ Deep Learning","AI ⊃ ML ⊃ Deep Learning","Deep Learning ⊂ AI ⊂ ML","ML ⊃ AI ⊃ Deep Learning"],
+    ans: 1, expl: "AI is broadest, ML is a subset of AI, Deep Learning is a subset of ML." },
+  { q: "What does NLP stand for?",
+    opts: ["Network Layer Protocol","Neural Logic Processing","Natural Language Processing","Numeric Learning Pattern"],
+    ans: 2, expl: "NLP — Natural Language Processing — enables machines to understand human language." },
+  { q: "What inspires the structure of a neural network?",
+    opts: ["The internet","The human brain","A decision tree","A spreadsheet"],
+    ans: 1, expl: "Neural networks are modelled on the structure and function of neurons in the human brain." },
+  { q: "What is 'overfitting' in machine learning?",
+    opts: ["Model is too simple","Works perfectly on all data","Memorises training data, fails on new data","Has not been trained enough"],
+    ans: 2, expl: "Overfitting = memorising training data (including noise) without generalising to new examples." },
+  { q: "Which architecture powers most modern LLMs?",
+    opts: ["CNN","RNN","Decision Tree","Transformer"],
+    ans: 3, expl: "The Transformer (2017) is the foundational architecture behind GPT-4, Claude, Gemini, and most LLMs." },
+  { q: "What does POPIA stand for in South Africa?",
+    opts: ["Protection of Private Information Act","Protection of Personal Information Act","Privacy of Personal Intelligence Act","Protocol of Personal Information Access"],
+    ans: 1, expl: "POPIA — Protection of Personal Information Act — governs personal data handling in South Africa." },
+  { q: "In supervised learning, training data is:",
+    opts: ["Unlabelled","Labelled with correct answers","Always images","Generated by the model"],
+    ans: 1, expl: "Supervised learning requires labelled data — each input has a known, correct output label." },
+];
+
+// ═══════════════════════════════════════════════════════════════
+//  FUN FACTS
+// ═══════════════════════════════════════════════════════════════
+const FACTS = [
+  "The term 'Artificial Intelligence' was coined by John McCarthy at the Dartmouth Conference in 1956.",
+  "GPT-4 was trained on approximately 1 trillion tokens of text data.",
+  "AlphaFold predicted the structures of over 200 million proteins — decades of scientific work in months.",
+  "The first neural network model was proposed by McCulloch & Pitts in 1943.",
+  "South Africa's POPIA Act protects citizens' personal data from misuse by AI systems.",
+  "AlphaGo defeated the world Go champion Lee Sedol in 2016 — a milestone experts predicted was a decade away.",
+  "Deep Learning requires GPUs because they process thousands of matrix operations simultaneously.",
+  "Over 77% of the devices you use daily incorporate some form of artificial intelligence.",
+];
+
+// ═══════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════
+let isLight = false;
+let history  = [];
+
+// ═══════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════
+window.onload = () => {
+  renderWelcome();
+  rotateFact();
+  setInterval(rotateFact, 14000);
+};
+
+function rotateFact() {
+  document.getElementById('factbox').textContent =
+    FACTS[Math.floor(Math.random() * FACTS.length)];
+}
+
+function renderWelcome() {
+  document.getElementById('msgs').innerHTML = `
+    <div class="welcome">
+      <div class="welcome-icon">🧠</div>
+      <div class="welcome-title">Welcome to <span>Clicks to Fixers</span></div>
+      <p class="welcome-sub">Your AI concept learning assistant for the CAPACITI Tech Career Accelerator. Explore Machine Learning, Deep Learning, NLP, Neural Networks, and AI Ethics.</p>
+      <div class="welcome-actions">
+        <button class="wa-btn" onclick="ask('what is artificial intelligence')">🤖 What is AI?</button>
+        <button class="wa-btn" onclick="runFlow('nlp')">💬 Explore NLP</button>
+        <button class="wa-btn" onclick="runFlow('ethics')">⚖️ AI Ethics</button>
+        <button class="wa-btn" onclick="showQuiz()">🎯 Take a Quiz</button>
+        <button class="wa-btn" onclick="showDiagram('hierarchy')">📊 View Diagram</button>
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CHAT ENGINE
+// ═══════════════════════════════════════════════════════════════
+function sendMsg() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  processInput(text);
+}
+
+function ask(query) { processInput(query); }
+
+function processInput(rawQuery) {
+  const query = rawQuery.toLowerCase().trim();
+  appendUserMsg(rawQuery);
+
+  setTimeout(() => {
+    const match = findMatch(query);
+    if (match) {
+      appendBotMsg(match);
+      history.push({ query, key: match.keys[0] });
+      updateProgress(match.module);
+      updateChipsFromMatch(match);
+    } else {
+      appendErrorMsg(query);
+    }
+  }, 500);
+}
+
+function findMatch(query) {
+  const q = query.toLowerCase().trim();
+
+  // Block social/greeting queries — never match QA
+  const social = ['how are you','hello','hi','hey','good morning','good afternoon',
+    'good evening','thanks','thank you','bye','goodbye','who are you',
+    'what is your name','whats up',"what's up",'how r you'];
+  if (social.some(s => q === s || q.startsWith(s + ' '))) return null;
+
+  // Strip filler so "how can i learn machine learning" → "machine learning"
+  const filler = [
+    'how can i learn about','how can i learn','how do i learn about','how do i learn',
+    'how to learn about','how to learn','teach me about','tell me about',
+    'explain to me','what can you tell me about','i want to know about',
+    'i want to learn about','i want to learn','can you explain',
+    'how do i understand','help me understand','what do you know about',
+    'give me info on','info on'
+  ];
+  let stripped = q;
+  for (const f of filler) {
+    if (stripped.startsWith(f + ' ') || stripped === f) {
+      stripped = stripped.slice(f.length).trim();
+      break;
+    }
+  }
+
+  // Pass 1: exact match on original query
+  for (const qa of QA) {
+    for (const key of qa.keys) {
+      if (q === key) return qa;
+    }
+  }
+
+  // Pass 2: exact match on stripped query
+  for (const qa of QA) {
+    for (const key of qa.keys) {
+      if (stripped === key) return qa;
+    }
+  }
+
+  // Pass 3: stripped query contains a full key
+  for (const qa of QA) {
+    for (const key of qa.keys) {
+      if (stripped.includes(key)) return qa;
+    }
+  }
+
+  // Pass 4: a key contains the stripped query (only if 2+ chars)
+  // short terms like "ai", "ml", "nlp", "rl" are valid
+  if (stripped.length >= 2) {
+    // for very short terms (under 4 chars) require word-boundary match
+    // to avoid "ai" matching "training" etc.
+    for (const qa of QA) {
+      for (const key of qa.keys) {
+        if (stripped.length >= 4) {
+          if (key.includes(stripped)) return qa;
+        } else {
+          // short term: match whole word only
+          const re = new RegExp('(^|\\s)' + stripped + '(\\s|$)');
+          if (re.test(key)) return qa;
+        }
+      }
+    }
+  }
+
+  // Pass 5: scored word overlap — content words only (5+ chars)
+  // to avoid noise words like "learn", "about" causing wrong matches
+  const contentWords = stripped.split(/\s+/).filter(w => w.length >= 5);
+  if (contentWords.length > 0) {
+    let best = null, bestScore = 0;
+    for (const qa of QA) {
+      let score = 0;
+      for (const key of qa.keys) {
+        for (const w of contentWords) {
+          if (key.includes(w)) score += 2;
+        }
+        for (const kw of key.split(/\s+/).filter(w => w.length >= 5)) {
+          if (stripped.includes(kw)) score += 1;
+        }
+      }
+      if (score > bestScore) { bestScore = score; best = qa; }
+    }
+    if (bestScore >= 3) return best;
+  }
+
+  return null;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MESSAGE RENDERERS
+// ═══════════════════════════════════════════════════════════════
+function clearWelcome() {
+  const msgs = document.getElementById('msgs');
+  const w = msgs.querySelector('.welcome');
+  if (w) w.remove();
+}
+
+function appendUserMsg(text) {
+  clearWelcome();
+  const msgs = document.getElementById('msgs');
+  const d = document.createElement('div');
+  d.className = 'msg-row user';
+  d.innerHTML = `
+    <div class="avatar user-av">👤</div>
+    <div class="bubble">${esc(text)}</div>`;
+  msgs.appendChild(d);
+  scrollBottom();
+}
+
+function appendBotMsg(qa) {
+  const msgs = document.getElementById('msgs');
+  const d = document.createElement('div');
+  d.className = 'msg-row bot';
+
+  const relLinks = qa.related.map(r =>
+    `<button class="rel-btn" onclick="ask('${r.toLowerCase()}')">${r}</button>`
+  ).join('');
+
+  d.innerHTML = `
+    <div class="avatar bot-av">🧠</div>
+    <div>
+      <div class="bubble">
+        <h4>${qa.title}<span class="mod-badge">Module ${qa.module}</span></h4>
+        ${qa.answer}
+        <div class="related-row">
+          <span class="related-label">Related</span>
+          ${relLinks}
+        </div>
+        <div class="further-box">
+          <div class="further-label">📚 Source: CAPACITI Bootcamp</div>
+          <p>${qa.further}</p>
+        </div>
+      </div>
+      <div class="fb-row">
+        <button class="fb-btn" onclick="feedback(this,'👍')">👍 Helpful</button>
+        <button class="fb-btn" onclick="feedback(this,'👎')">👎 Not helpful</button>
+      </div>
+    </div>`;
+  msgs.appendChild(d);
+  scrollBottom();
+}
+
+function appendErrorMsg(query) {
+  const msgs = document.getElementById('msgs');
+  const d = document.createElement('div');
+  d.className = 'msg-row bot';
+  d.innerHTML = `
+    <div class="avatar bot-av">🧠</div>
+    <div class="bubble">
+      <p>🤔 I didn't quite catch <em>"${esc(query)}"</em> — I specialise in AI concepts.</p>
+      <p style="margin-top:8px">Try asking about:</p>
+      <div class="related-row" style="margin-top:6px">
+        <button class="rel-btn" onclick="ask('what is machine learning')">Machine Learning</button>
+        <button class="rel-btn" onclick="ask('what is nlp')">NLP</button>
+        <button class="rel-btn" onclick="ask('what are neural networks')">Neural Networks</button>
+        <button class="rel-btn" onclick="ask('what is ai ethics')">AI Ethics</button>
+        <button class="rel-btn" onclick="ask('what is deep learning')">Deep Learning</button>
+      </div>
+      <p style="margin-top:10px;font-size:12px;color:var(--text-3)">Or use the <strong>Guided Flows</strong> on the left sidebar to follow a structured learning path.</p>
+    </div>`;
+  msgs.appendChild(d);
+  scrollBottom();
+}
+
+function feedback(btn, type) {
+  btn.closest('.fb-row').innerHTML =
+    `<span class="fb-note">${type === '👍' ? '✅ Thanks — glad that helped!' : '📝 Thanks for the feedback.'}</span>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CONVERSATION FLOWS
+// ═══════════════════════════════════════════════════════════════
+function runFlow(name) {
+  const flow = FLOWS[name];
+  if (!flow) return;
+  ask(flow.steps[0]);
+
+  // Show remaining steps as suggestion chips
+  const chips = document.getElementById('chips');
+  chips.innerHTML = flow.steps.slice(1).map((s, i) =>
+    `<button class="chip-btn" onclick="ask('${s}')">Step ${i + 2}: ${getQATitle(s)}</button>`
+  ).join('') + `<button class="chip-btn" onclick="resetChips()">✕ Exit flow</button>`;
+}
+
+function getQATitle(key) {
+  const qa = QA.find(q => q.keys.includes(key));
+  if (!qa) return key;
+  return qa.title.length > 28 ? qa.title.slice(0, 28) + '…' : qa.title;
+}
+
+function updateChipsFromMatch(match) {
+  // Only update if we're not mid-flow
+  const chips = document.getElementById('chips');
+  if (chips.querySelector('.chip-btn') && !chips.innerHTML.includes('Exit flow')) {
+    chips.innerHTML = match.related.map(r =>
+      `<button class="chip-btn" onclick="ask('${r.toLowerCase()}')">${r}</button>`
+    ).join('') + `<button class="chip-btn" onclick="resetChips()">All topics</button>`;
+  }
+}
+
+function resetChips() {
+  document.getElementById('chips').innerHTML = `
+    <button class="chip-btn" onclick="ask('what is artificial intelligence')">What is AI?</button>
+    <button class="chip-btn" onclick="ask('what is machine learning')">What is ML?</button>
+    <button class="chip-btn" onclick="ask('what is nlp')">What is NLP?</button>
+    <button class="chip-btn" onclick="ask('ai vs ml vs deep learning')">AI vs ML vs DL</button>
+    <button class="chip-btn" onclick="ask('real world ai applications')">AI Applications</button>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  QUIZ
+// ═══════════════════════════════════════════════════════════════
+function showQuiz() {
+  clearWelcome();
+  const quiz = QUIZZES[Math.floor(Math.random() * QUIZZES.length)];
+  const qid  = 'q' + Date.now();
+  const msgs  = document.getElementById('msgs');
+  const d     = document.createElement('div');
+  d.className = 'msg-row bot';
+  d.innerHTML = `
+    <div class="avatar bot-av">🧠</div>
+    <div class="bubble">
+      <h4>🎯 Knowledge Check</h4>
+      <div class="quiz-card" id="${qid}">
+        <div class="quiz-q">${quiz.q}</div>
+        <div class="quiz-opts">
+          ${quiz.opts.map((o, i) =>
+            `<button class="quiz-opt" onclick="checkAnswer(this,'${qid}',${i},${quiz.ans},'${esc(quiz.expl)}')">${String.fromCharCode(65 + i)}. ${o}</button>`
+          ).join('')}
+        </div>
+        <div class="quiz-fb" id="fb_${qid}"></div>
+      </div>
+    </div>`;
+  msgs.appendChild(d);
+  scrollBottom();
+}
+
+function checkAnswer(btn, qid, selected, correct, expl) {
+  const card = document.getElementById(qid);
+  card.querySelectorAll('.quiz-opt').forEach((b, i) => {
+    b.disabled = true;
+    if (i === correct)  b.classList.add('correct');
+    else if (i === selected) b.classList.add('wrong');
+  });
+  document.getElementById('fb_' + qid).innerHTML =
+    selected === correct
+      ? `✅ Correct! ${expl}`
+      : `❌ Not quite. ${expl}`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  DIAGRAMS
+// ═══════════════════════════════════════════════════════════════
+function showDiagram(type) {
+  clearWelcome();
+  const msgs = document.getElementById('msgs');
+  const d    = document.createElement('div');
+  d.className = 'msg-row bot';
+
+  let title = '', html = '';
+
+  if (type === 'hierarchy') {
+    title = 'AI / ML / Deep Learning Hierarchy';
+    html = `
+      <div class="hier">
+        <div class="hier-node h-ai">🤖 Artificial Intelligence</div>
+        <div class="hier-arrow">▼ contains</div>
+        <div class="hier-node h-ml">📊 Machine Learning</div>
+        <div class="hier-arrow">▼ contains</div>
+        <div class="hier-node h-dl">🕸️ Deep Learning</div>
+        <p class="hier-note">AI is the broadest field. ML is a subset of AI that learns from data.<br>Deep Learning is a subset of ML using many-layered neural networks.</p>
+      </div>`;
+
+  } else if (type === 'nn') {
+    title = 'Neural Network Architecture';
+    html = `
+      <div class="nn-grid">
+        <div class="nn-col">
+          <div class="nn-col-label">Input Layer</div>
+          ${[1,2,3].map(() => `<div class="nn-node nn-i"></div>`).join('')}
+          <div style="font-size:10px;color:var(--text-3);margin-top:4px">Raw data</div>
+        </div>
+        <div class="nn-arrow">→</div>
+        <div class="nn-col">
+          <div class="nn-col-label">Hidden Layer 1</div>
+          ${[1,2,3,4].map(() => `<div class="nn-node nn-h"></div>`).join('')}
+          <div style="font-size:10px;color:var(--text-3);margin-top:4px">Features</div>
+        </div>
+        <div class="nn-arrow">→</div>
+        <div class="nn-col">
+          <div class="nn-col-label">Hidden Layer 2</div>
+          ${[1,2,3,4].map(() => `<div class="nn-node nn-h"></div>`).join('')}
+          <div style="font-size:10px;color:var(--text-3);margin-top:4px">Patterns</div>
+        </div>
+        <div class="nn-arrow">→</div>
+        <div class="nn-col">
+          <div class="nn-col-label">Output Layer</div>
+          ${[1,2].map(() => `<div class="nn-node nn-o"></div>`).join('')}
+          <div style="font-size:10px;color:var(--text-3);margin-top:4px">Prediction</div>
+        </div>
+      </div>
+      <p style="font-size:11px;color:var(--text-3);text-align:center;margin-top:12px">🔵 Input → 🟣 Hidden (feature extraction) → 🟢 Output (prediction)</p>`;
+
+  } else if (type === 'nlp') {
+    title = 'NLP Processing Pipeline';
+    html = `
+      <div class="nlp-steps">
+        ${[
+          ['1', 'Raw Text Input',    'User types: "The product is amazing!"'],
+          ['2', 'Tokenisation',      'Split into tokens: ["The", "product", "is", "amazing", "!"]'],
+          ['3', 'Preprocessing',     'Remove stopwords, lowercase, apply stemming'],
+          ['4', 'Feature Extraction','Convert words to numerical vectors (embeddings)'],
+          ['5', 'Model Processing',  'Transformer / RNN processes the sequence'],
+          ['6', 'Output',            'Sentiment: Positive — 94% confidence'],
+        ].map(([n, step, desc]) => `
+          <div class="nlp-step">
+            <div class="nlp-num">${n}</div>
+            <div class="nlp-text"><strong>${step}</strong> — ${desc}</div>
+          </div>`).join('')}
+      </div>`;
+
+  } else if (type === 'ethics') {
+    title = 'AI Ethics Framework';
+    html = `
+      <div class="ethics-grid">
+        ${[
+          ['var(--blue-dim)',   'var(--blue)',   '⚖️ Fairness',       'AI must not discriminate against individuals or groups'],
+          ['var(--violet-dim)', 'var(--violet)', '🔍 Transparency',   'AI decisions must be explainable and auditable'],
+          ['var(--green-dim)',  'var(--green)',  '🔒 Privacy',        'Personal data must be protected (POPIA / GDPR)'],
+          ['rgba(239,68,68,.08)', '#f87171',    '🛡️ Safety',         'AI must not cause harm to individuals or society'],
+          ['rgba(245,158,11,.08)', 'var(--amber)', '✅ Accountability', 'Humans remain responsible for AI system outcomes'],
+          ['rgba(59,130,246,.08)', 'var(--blue)', '🌍 Inclusivity',    'AI benefits must be accessible to all communities'],
+        ].map(([bg, color, heading, desc]) => `
+          <div class="ethics-pill" style="background:${bg};border-color:${color}">
+            <div class="ethics-title-text" style="color:${color}">${heading}</div>
+            <div class="ethics-desc">${desc}</div>
+          </div>`).join('')}
+      </div>`;
+  }
+
+  d.innerHTML = `
+    <div class="avatar bot-av">🧠</div>
+    <div class="bubble">
+      <h4>📊 ${title}</h4>
+      <div class="diagram-wrap">
+        <div class="diagram-caption">${title}</div>
+        ${html}
+      </div>
+      <div class="related-row">
+        <span class="related-label">Explore</span>
+        <button class="rel-btn" onclick="ask('ai vs ml vs deep learning')">AI vs ML vs DL</button>
+        <button class="rel-btn" onclick="showDiagram('nn')">Neural Net →</button>
+        <button class="rel-btn" onclick="showQuiz()">Take a Quiz →</button>
+      </div>
+    </div>`;
+  msgs.appendChild(d);
+  scrollBottom();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PROGRESS TRACKING
+// ═══════════════════════════════════════════════════════════════
+function updateProgress(module) {
+  const map = { 1: 'p1', 2: 'p2', 3: 'p3', 4: 'p4' };
+  const id  = map[module];
+  if (!id) return;
+  const bar   = document.getElementById(id);
+  const label = document.getElementById(id + 't');
+  const cur   = parseInt(bar.style.width) || 0;
+  const next  = Math.min(cur + 20, 100);
+  bar.style.width    = next + '%';
+  label.textContent  = next + '%';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  THEME TOGGLE
+// ═══════════════════════════════════════════════════════════════
+function toggleTheme() {
+  isLight = !isLight;
+  document.documentElement.classList.toggle('light', isLight);
+  document.getElementById('ttrack').classList.toggle('on', isLight);
+  document.getElementById('tthumb').textContent  = isLight ? '☀️' : '🌙';
+  document.getElementById('themeLabel').textContent = isLight ? 'Light' : 'Dark';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  UTILITIES
+// ═══════════════════════════════════════════════════════════════
+function scrollBottom() {
+  const c = document.getElementById('msgs');
+  c.scrollTop = c.scrollHeight;
+}
+
+function esc(t) {
+  return String(t)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function clearChat() {
+  history.length = 0;
+  renderWelcome();
+  resetChips();
+}
+</script>
+</body>
+</html>
